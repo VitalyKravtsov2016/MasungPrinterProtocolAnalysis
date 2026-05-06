@@ -1,0 +1,42 @@
+name: Build Protocol PDF
+
+on:
+  push:
+    paths:
+      - 'MASUNG_ESC_POS_Protocol_RU.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pandoc and TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc texlive-xetex texlive-lang-cyrillic \
+            texlive-fonts-recommended fonts-dejavu
+
+      - name: Build PDF
+        run: |
+          pandoc MASUNG_ESC_POS_Protocol_RU.md \
+            -o MASUNG_ESC_POS_Protocol_RU.pdf \
+            --pdf-engine=xelatex \
+            -V mainfont="DejaVu Serif" \
+            -V monofont="DejaVu Sans Mono" \
+            -V geometry:margin=2cm \
+            -V lang=ru-RU \
+            --toc
+
+      - name: Commit generated PDF
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add MASUNG_ESC_POS_Protocol_RU.pdf
+          git diff --cached --quiet || git commit -m "Auto-build: update MASUNG_ESC_POS_Protocol_RU.pdf"
+          git push
